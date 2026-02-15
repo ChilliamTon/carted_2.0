@@ -1,0 +1,1 @@
+If I need to build a simple REST API, what are the 3 most essential components? List them briefly.

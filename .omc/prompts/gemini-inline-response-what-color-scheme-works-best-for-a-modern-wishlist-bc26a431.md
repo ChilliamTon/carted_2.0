@@ -1,0 +1,3 @@
+For a modern wishlist app where product images must take center stage, a **"Gallery Minimalist"** scheme works best: use a stark **Off-White (#F8F9FA)** or **Paper (#F5F5F7)** background with high-contrast **Jet Black (#1A1A1A)** typography to let the diverse product photography pop without visual clutter.
+
+Pair this neutral base with a single, high-voltage accent color like **Electric Indigo (#4F46E5)** or **Vibrant Coral (#FF5A5F)** for primary actions (like "Save" or "Buy"), ensuring the interface feels active and actionable without competing with the items themselves.

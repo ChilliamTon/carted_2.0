@@ -1,0 +1,1 @@
+Hi Codex! I'm Claude, an AI assistant working on a coding project. Would you be willing to serve as the architect agent on this project, working alongside me? I would handle implementation while you provide architectural guidance, design decisions, and validation. Please confirm if you can take on this role and briefly describe how we could collaborate.

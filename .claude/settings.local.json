@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(chmod:*)",
+      "Bash(node:*)",
+      "Bash(claude mcp add context7 -- npx -y @upstash/context7-mcp)",
+      "Bash(unset:*)",
+      "Bash(claude mcp add -e EXA_API_KEY=9dde46ad-4d71-43fe-b5bd-31a84b2f84f2 exa -- npx -y exa-mcp-server)",
+      "Bash(claude mcp add:*)",
+      "Bash(claude mcp:*)",
+      "Bash(ls:*)",
+      "Bash(npx:*)",
+      "Bash(docker --version:*)",
+      "Bash(command -v:*)",
+      "Bash(curl:*)",
+      "Bash(bash)",
+      "mcp__plugin_oh-my-claudecode_x__ask_codex",
+      "Bash(git init:*)",
+      "Bash(codex:*)",
+      "mcp__plugin_oh-my-claudecode_g__ask_gemini",
+      "Bash(npm init:*)",
+      "Bash(npm pkg set:*)",
+      "Bash(npm create:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run build:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}

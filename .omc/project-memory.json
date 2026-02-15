@@ -1,0 +1,211 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1771179211821,
+  "projectRoot": "/Users/tonthattuankiet/Documents/carted_2.0",
+  "techStack": {
+    "languages": [],
+    "frameworks": [],
+    "packageManager": null,
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": null,
+    "testCommand": null,
+    "lintCommand": null,
+    "devCommand": null,
+    "scripts": {}
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [],
+    "gitBranches": null
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "maestro": {
+      "path": "maestro",
+      "purpose": null,
+      "fileCount": 16,
+      "lastAccessed": 1771179211805,
+      "keyFiles": [
+        "Cargo.lock",
+        "Cargo.toml",
+        "LICENSE",
+        "README.md",
+        "biome.json"
+      ]
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "package.json",
+      "accessCount": 3,
+      "lastAccessed": 1771179925162,
+      "type": "file"
+    },
+    {
+      "path": "src/App.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1771180118484,
+      "type": "file"
+    },
+    {
+      "path": "src/types/index.ts",
+      "accessCount": 2,
+      "lastAccessed": 1771180185730,
+      "type": "file"
+    },
+    {
+      "path": "tsconfig.json",
+      "accessCount": 2,
+      "lastAccessed": 1771180194409,
+      "type": "file"
+    },
+    {
+      "path": "src/index.css",
+      "accessCount": 2,
+      "lastAccessed": 1771180208162,
+      "type": "file"
+    },
+    {
+      "path": "PROJECT.md",
+      "accessCount": 1,
+      "lastAccessed": 1771179837286,
+      "type": "file"
+    },
+    {
+      "path": "vite.config.ts",
+      "accessCount": 1,
+      "lastAccessed": 1771179879433,
+      "type": "file"
+    },
+    {
+      "path": "tsconfig.node.json",
+      "accessCount": 1,
+      "lastAccessed": 1771179883200,
+      "type": "file"
+    },
+    {
+      "path": "index.html",
+      "accessCount": 1,
+      "lastAccessed": 1771179908473,
+      "type": "file"
+    },
+    {
+      "path": "src/main.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1771179908741,
+      "type": "file"
+    },
+    {
+      "path": "tailwind.config.js",
+      "accessCount": 1,
+      "lastAccessed": 1771179909421,
+      "type": "file"
+    },
+    {
+      "path": "postcss.config.js",
+      "accessCount": 1,
+      "lastAccessed": 1771179909626,
+      "type": "file"
+    },
+    {
+      "path": "src/test/setup.ts",
+      "accessCount": 1,
+      "lastAccessed": 1771179909833,
+      "type": "file"
+    },
+    {
+      "path": "supabase/migrations/001_initial_schema.sql",
+      "accessCount": 1,
+      "lastAccessed": 1771179985072,
+      "type": "file"
+    },
+    {
+      "path": "src/lib/supabase.ts",
+      "accessCount": 1,
+      "lastAccessed": 1771179993041,
+      "type": "file"
+    },
+    {
+      "path": ".env.example",
+      "accessCount": 1,
+      "lastAccessed": 1771179993943,
+      "type": "file"
+    },
+    {
+      "path": "src/hooks/useAuth.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1771180022937,
+      "type": "file"
+    },
+    {
+      "path": "src/hooks/useAuth.ts",
+      "accessCount": 1,
+      "lastAccessed": 1771180027776,
+      "type": "file"
+    },
+    {
+      "path": "src/hooks/useLists.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1771180052093,
+      "type": "file"
+    },
+    {
+      "path": "src/hooks/useLists.ts",
+      "accessCount": 1,
+      "lastAccessed": 1771180058205,
+      "type": "file"
+    },
+    {
+      "path": "src/hooks/useItems.ts",
+      "accessCount": 1,
+      "lastAccessed": 1771180077227,
+      "type": "file"
+    },
+    {
+      "path": "src/components/lists/ListCard.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1771180087723,
+      "type": "file"
+    },
+    {
+      "path": "src/components/items/ItemCard.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1771180093835,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/Lists.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1771180103802,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/Auth.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1771180112280,
+      "type": "file"
+    },
+    {
+      "path": "src/vite-env.d.ts",
+      "accessCount": 1,
+      "lastAccessed": 1771180183509,
+      "type": "file"
+    },
+    {
+      "path": "README.md",
+      "accessCount": 1,
+      "lastAccessed": 1771180238762,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}

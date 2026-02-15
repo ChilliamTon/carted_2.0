@@ -1,0 +1,1 @@
+What's the difference between === and == in JavaScript? Answer in one sentence.

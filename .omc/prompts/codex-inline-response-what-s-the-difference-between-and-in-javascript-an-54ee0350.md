@@ -1,0 +1,1 @@
+`==` does loose equality with type coercion (it may convert values before comparing), while `===` does strict equality and returns true only when both value and type are the same.

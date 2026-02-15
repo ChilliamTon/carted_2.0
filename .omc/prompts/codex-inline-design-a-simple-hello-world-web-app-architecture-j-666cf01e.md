@@ -1,0 +1,1 @@
+Design a simple "Hello World" web app architecture. Just respond with a basic tech stack recommendation (2-3 sentences).

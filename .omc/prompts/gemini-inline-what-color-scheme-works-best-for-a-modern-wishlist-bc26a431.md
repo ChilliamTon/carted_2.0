@@ -1,0 +1,1 @@
+What color scheme works best for a modern wishlist app? Answer in 2-3 sentences.

@@ -1,0 +1,1 @@
+Use a minimal stack: `React` (frontend) + `Node.js` with `Express` (backend) + static deployment on `Vercel` or `Netlify` for simplicity. Keep the app as a single page that calls one `/api/hello` endpoint returning `"Hello World"` JSON, so frontend/backend boundaries are clear from day one. For local development, use `Vite` for fast startup and `npm` scripts to run both services.
