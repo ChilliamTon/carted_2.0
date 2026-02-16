@@ -1,11 +1,16 @@
+import { useState } from 'react'
+import { PriceHistoryChart } from './PriceHistoryChart'
 import type { Item } from '../../types'
 
 interface ItemCardProps {
   item: Item
   onDelete?: () => void
+  isDeleting?: boolean
 }
 
-export function ItemCard({ item, onDelete }: ItemCardProps) {
+export function ItemCard({ item, onDelete, isDeleting = false }: ItemCardProps) {
+  const [showPriceHistory, setShowPriceHistory] = useState(false)
+
   return (
     <div className="group bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full relative">
 
@@ -18,11 +23,13 @@ export function ItemCard({ item, onDelete }: ItemCardProps) {
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
           />
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center text-slate-300 bg-slate-50">
-            <svg className="w-10 h-10 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            <span className="text-xs font-medium uppercase tracking-wider text-slate-400">No Image</span>
+          <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
+            <div className="w-14 h-14 rounded-2xl bg-white shadow-sm border border-slate-200/60 flex items-center justify-center mb-2">
+              <svg className="w-7 h-7 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+              </svg>
+            </div>
+            <span className="text-xs font-medium text-slate-400">No image</span>
           </div>
         )}
 
@@ -37,20 +44,40 @@ export function ItemCard({ item, onDelete }: ItemCardProps) {
           </span>
         </div>
 
-        {/* Action Overlay (Desktop) */}
-        <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex justify-end gap-2">
+        {/* Action Overlay */}
+        <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/60 to-transparent sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300 flex justify-end gap-2">
+          <button
+            onClick={(e) => {
+              e.preventDefault()
+              setShowPriceHistory(true)
+            }}
+            disabled={isDeleting}
+            className="p-2 bg-white/90 text-slate-600 hover:text-primary-600 hover:bg-white rounded-lg shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Price history"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </button>
            {onDelete && (
             <button
               onClick={(e) => {
-                e.preventDefault();
-                onDelete();
+                e.preventDefault()
+                onDelete()
               }}
-              className="p-2 bg-white/90 text-slate-600 hover:text-red-600 hover:bg-white rounded-lg shadow-sm transition-colors"
+              disabled={isDeleting}
+              className="p-2 bg-white/90 text-slate-600 hover:text-red-600 hover:bg-white rounded-lg shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               title="Remove item"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
+              {isDeleting ? (
+                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h5m11 2a8 8 0 10-2.3 5.7" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              )}
             </button>
           )}
         </div>
@@ -76,8 +103,7 @@ export function ItemCard({ item, onDelete }: ItemCardProps) {
             <div className="text-lg font-bold text-slate-900 font-display">
                {item.current_price ? (
                  <>
-                   <span className="text-sm font-medium text-slate-500 mr-0.5 align-top">{item.currency || '$'}</span>
-                   {item.current_price.toFixed(2)}
+                   <span className="text-sm font-medium text-slate-500">{item.currency === 'USD' || !item.currency ? '$' : item.currency === 'EUR' ? '\u20AC' : item.currency === 'GBP' ? '\u00A3' : item.currency === 'JPY' ? '\u00A5' : item.currency}</span>{item.current_price.toFixed(2)}
                  </>
                ) : (
                  <span className="text-sm text-slate-400">--</span>
@@ -85,16 +111,34 @@ export function ItemCard({ item, onDelete }: ItemCardProps) {
             </div>
           </div>
 
-          <a
-            href={item.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-secondary text-xs px-3 py-1.5 h-8 rounded-lg"
-          >
-            Visit Store
-          </a>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowPriceHistory(true)}
+              disabled={isDeleting}
+              className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title="View price history"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </button>
+            <a
+              href={item.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-secondary text-xs px-3 py-1.5 h-8 rounded-lg"
+            >
+              Visit Store
+            </a>
+          </div>
         </div>
       </div>
+
+      <PriceHistoryChart
+        item={item}
+        isOpen={showPriceHistory}
+        onClose={() => setShowPriceHistory(false)}
+      />
     </div>
   )
 }

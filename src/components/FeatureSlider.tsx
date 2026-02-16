@@ -1,18 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { IconType } from 'react-icons';
-import { FaBoxes, FaLightbulb, FaShareAlt, FaBell } from 'react-icons/fa'; // Example icons
+import { useState, useEffect } from 'react'
+import { IconType } from 'react-icons'
+import { FaBoxes, FaLightbulb, FaShareAlt, FaBell } from 'react-icons/fa'
 
 interface Feature {
-  icon: IconType;
-  title: string;
-  description: string;
+  icon: IconType
+  title: string
+  description: string
 }
 
 const features: Feature[] = [
   {
     icon: FaBoxes,
     title: 'Organize Your Desires',
-    description: 'Create and manage multiple wishlists for every occasion and need.',
+    description: 'Create and manage multiple collections for every occasion and need.',
   },
   {
     icon: FaLightbulb,
@@ -22,26 +22,26 @@ const features: Feature[] = [
   {
     icon: FaShareAlt,
     title: 'Share with Friends & Family',
-    description: 'Easily share your wishlists with loved ones for hassle-free gifting.',
+    description: 'Easily share your collections with loved ones for hassle-free gifting.',
   },
   {
     icon: FaBell,
     title: 'Price Drop Alerts',
-    description: 'Get notified when items on your wishlist go on sale.',
+    description: 'Get notified when items in your collections go on sale.',
   },
-];
+]
 
 export function FeatureSlider({ className }: { className?: string }) {
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(0)
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentIndex((prevIndex) => (prevIndex + 1) % features.length);
-    }, 5000); // Change feature every 5 seconds
-    return () => clearInterval(interval);
-  }, []);
+      setCurrentIndex((prevIndex) => (prevIndex + 1) % features.length)
+    }, 5000)
+    return () => clearInterval(interval)
+  }, [])
 
-  const CurrentIcon = features[currentIndex].icon;
+  const CurrentIcon = features[currentIndex].icon
 
   return (
     <div className={`relative w-full h-full flex flex-col justify-between text-white ${className}`}>
@@ -71,16 +71,14 @@ export function FeatureSlider({ className }: { className?: string }) {
             className={`block w-2 h-2 rounded-full transition-all duration-300 ${
               currentIndex === index ? 'bg-white w-5' : 'bg-white/40'
             }`}
-          ></span>
+          />
         ))}
       </div>
 
       {/* Existing footer */}
-      <div className="flex gap-4 text-sm font-medium text-slate-500">
-        <span>© 2024 Wishlist Central</span>
-        <span>•</span>
-        <span>Privacy Policy</span>
+      <div className="flex text-sm font-medium text-slate-500">
+        <span>© 2026 Wishlist Central</span>
       </div>
     </div>
-  );
+  )
 }

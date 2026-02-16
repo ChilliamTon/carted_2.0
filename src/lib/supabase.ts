@@ -119,6 +119,20 @@ export type Database = {
           currency: string
           checked_at: string
         }
+        Insert: {
+          id?: string
+          item_id: string
+          price: number
+          currency?: string
+          checked_at?: string
+        }
+        Update: {
+          id?: string
+          item_id?: string
+          price?: number
+          currency?: string
+          checked_at?: string
+        }
       }
       availability_history: {
         Row: {
@@ -126,6 +140,18 @@ export type Database = {
           item_id: string
           is_available: boolean
           checked_at: string
+        }
+        Insert: {
+          id?: string
+          item_id: string
+          is_available: boolean
+          checked_at?: string
+        }
+        Update: {
+          id?: string
+          item_id?: string
+          is_available?: boolean
+          checked_at?: string
         }
       }
     }

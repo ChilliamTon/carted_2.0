@@ -41,10 +41,18 @@ export function Auth() {
       </div>
 
       {/* Right Panel - Auth Form */}
-      <div className="w-full lg:w-7/12 flex items-center justify-center p-8 bg-slate-50/50">
-        <div className="max-w-[420px] w-full bg-white p-8 sm:p-10 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 transition-all duration-300 ease-in-out">
+      <div className="w-full lg:w-7/12 flex items-center justify-center px-4 py-8 sm:p-8 bg-slate-50/50">
+        <div className="max-w-[420px] w-full bg-white p-6 sm:p-10 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 transition-all duration-300 ease-in-out">
+          {/* Mobile brand logo */}
+          <div className="flex justify-center mb-6 lg:hidden">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-primary-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-primary-500/30">
+              <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+              </svg>
+            </div>
+          </div>
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-slate-900 mb-2 font-display">
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2 font-display">
               {isSignUp ? 'Create your account' : 'Welcome back'}
             </h2>
             <p className="text-slate-600 text-base">
@@ -89,14 +97,27 @@ export function Auth() {
               )}
             </div>
 
-            {error && (
-              <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-start gap-3">
-                <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-                <span className="font-medium">{error}</span>
-              </div>
-            )}
+            <div className={`transition-all duration-300 ease-out overflow-hidden ${error ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'}`}>
+              {error && (
+                <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
+                  <div className="flex items-start gap-3">
+                    <svg className="w-5 h-5 flex-shrink-0 mt-0.5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <div>
+                      <p className="font-medium">{error}</p>
+                      <p className="text-red-500 text-xs mt-1">
+                        {error.toLowerCase().includes('invalid') || error.toLowerCase().includes('credentials')
+                          ? 'Double-check your email and password, then try again.'
+                          : error.toLowerCase().includes('already')
+                          ? 'Try signing in instead, or use a different email.'
+                          : 'Please try again. If the problem persists, try a different browser.'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
 
             <button
               type="submit"

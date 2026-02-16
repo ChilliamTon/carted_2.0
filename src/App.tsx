@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './hooks/useAuth'
 import { Auth } from './pages/Auth'
@@ -6,6 +7,13 @@ import { ListDetail } from './pages/ListDetail'
 
 function App() {
   const { user, loading, signOut } = useAuth()
+  const [scrolled, setScrolled] = useState(false)
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 10)
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   if (loading) {
     return (
@@ -30,7 +38,7 @@ function App() {
   return (
     <div className="min-h-screen bg-slate-50 selection:bg-primary-100">
       {/* Glass Header */}
-      <header className="sticky top-0 z-50 w-full glass-panel border-b border-slate-200/80">
+      <header className={`sticky top-0 z-50 w-full glass-panel border-b transition-shadow duration-300 ${scrolled ? 'border-slate-200 shadow-lg shadow-slate-200/40' : 'border-slate-200/80'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-18">
             {/* Logo */}

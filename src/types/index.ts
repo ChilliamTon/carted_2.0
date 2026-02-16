@@ -45,3 +45,30 @@ export interface PriceHistory {
   currency: string
   checked_at: string
 }
+
+export interface AvailabilityHistory {
+  id: string
+  item_id: string
+  is_available: boolean
+  checked_at: string
+}
+
+export interface PriceAlert {
+  item_id: string
+  target_price: number
+  current_price: number | null
+  triggered: boolean
+}
+
+export type PriceCheckStatus = 'idle' | 'checking' | 'success' | 'error'
+
+export interface PriceCheckResult {
+  item_id: string
+  price: number | null
+  currency: string
+  is_available: boolean
+  checked_at: string
+  previous_price: number | null
+  price_change: number | null
+  price_direction: 'up' | 'down' | 'same' | null
+}

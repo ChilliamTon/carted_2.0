@@ -1,12 +1,16 @@
+import { useState } from 'react'
+import { ConfirmDialog } from '../ui'
 import type { List } from '../../types'
 
 interface ListCardProps {
   list: List
   onClick?: () => void
   onDelete?: () => void
+  isDeleting?: boolean
 }
 
-export function ListCard({ list, onClick, onDelete }: ListCardProps) {
+export function ListCard({ list, onClick, onDelete, isDeleting = false }: ListCardProps) {
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   // Deterministic gradient based on list ID
   const getGradient = (id: string) => {
     const gradients = [
@@ -26,9 +30,9 @@ export function ListCard({ list, onClick, onDelete }: ListCardProps) {
   return (
     <div
       onClick={onClick}
-      className="group relative bg-white rounded-2xl p-1 cursor-pointer border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 ease-out"
+      className="group relative bg-white rounded-2xl cursor-pointer border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 ease-out overflow-hidden"
     >
-      <div className="h-full bg-white rounded-xl overflow-hidden flex flex-col">
+      <div className="h-full flex flex-col">
         {/* Visual Header */}
         <div className={`h-24 bg-gradient-to-br ${gradient} p-5 relative overflow-hidden`}>
           <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors duration-300"></div>
@@ -65,19 +69,41 @@ export function ListCard({ list, onClick, onDelete }: ListCardProps) {
               <button
                 onClick={(e) => {
                   e.stopPropagation()
-                  if(window.confirm('Delete this collection?')) onDelete()
+                  setShowDeleteConfirm(true)
                 }}
-                className="text-slate-300 hover:text-red-500 p-1.5 hover:bg-red-50 rounded-lg transition-colors"
+                disabled={isDeleting}
+                className="text-slate-400 hover:text-red-500 p-1.5 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Delete collection"
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
+                {isDeleting ? (
+                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h5m11 2a8 8 0 10-2.3 5.7" />
+                  </svg>
+                ) : (
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                )}
               </button>
             )}
           </div>
         </div>
       </div>
+
+      {onDelete && (
+        <ConfirmDialog
+          isOpen={showDeleteConfirm}
+          onConfirm={() => {
+            setShowDeleteConfirm(false)
+            onDelete()
+          }}
+          onCancel={() => setShowDeleteConfirm(false)}
+          title="Delete Collection"
+          message={`Are you sure you want to delete "${list.name}"? This action cannot be undone.`}
+          confirmLabel="Delete"
+          variant="danger"
+        />
+      )}
     </div>
   )
 }

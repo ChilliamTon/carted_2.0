@@ -4,25 +4,29 @@ import { useAuth } from '../hooks/useAuth'
 import { useLists } from '../hooks/useLists'
 import { useItems } from '../hooks/useItems'
 import { ItemCard } from '../components/items/ItemCard'
+import { ConfirmDialog, useToast } from '../components/ui'
 import { scrapeProductUrl, isLikelyProductUrl } from '../lib/scraper'
-import type { Item } from '../types'
+import { recheckAllPrices } from '../lib/priceChecker'
 
 export function ListDetail() {
   const { listId } = useParams<{ listId: string }>()
   const navigate = useNavigate()
   const { user } = useAuth()
   
+  const toast = useToast()
+
   // Fetch lists to get the current list details (name, etc.)
   const { lists, loading: listsLoading, deleteList, updateList } = useLists(user?.id || null)
   const currentList = lists.find(l => l.id === listId)
 
   // Fetch items for this list
-  const { items, loading: itemsLoading, createItem, deleteItem } = useItems(listId || null)
+  const { items, loading: itemsLoading, createItem, deleteItem, refetch } = useItems(listId || null)
 
   // Local state for UI
   const [showAddForm, setShowAddForm] = useState(false)
   const [isEditingName, setIsEditingName] = useState(false)
   const [editedName, setEditedName] = useState('')
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   // Form state
   const [formData, setFormData] = useState({
@@ -35,6 +39,42 @@ export function ListDetail() {
   })
   const [isScraping, setIsScraping] = useState(false)
   const [scrapeError, setScrapeError] = useState<string | null>(null)
+  const [isAddingItem, setIsAddingItem] = useState(false)
+  const [isDeletingCollection, setIsDeletingCollection] = useState(false)
+  const [deletingItemId, setDeletingItemId] = useState<string | null>(null)
+
+  // Price checking state
+  const [isCheckingPrices, setIsCheckingPrices] = useState(false)
+  const [priceCheckProgress, setPriceCheckProgress] = useState({ completed: 0, total: 0 })
+
+  const handleCheckPrices = async () => {
+    if (items.length === 0 || isCheckingPrices) return
+    setIsCheckingPrices(true)
+    setPriceCheckProgress({ completed: 0, total: items.length })
+
+    try {
+      const results = await recheckAllPrices(items, (completed, total) => {
+        setPriceCheckProgress({ completed, total })
+      })
+      const succeeded = results.length
+      const failed = items.length - succeeded
+
+      if (succeeded === 0) {
+        toast.error('Price check failed for all items.')
+      } else if (failed > 0) {
+        toast.info(`Checked ${succeeded} item${succeeded === 1 ? '' : 's'}. ${failed} failed.`)
+      } else {
+        toast.success(`Checked prices for ${succeeded} item${succeeded === 1 ? '' : 's'}.`)
+      }
+
+      // Refetch items to show updated prices
+      refetch()
+    } catch {
+      toast.error('Price check failed. Please try again.')
+    } finally {
+      setIsCheckingPrices(false)
+    }
+  }
 
   // Sync edited name when list loads
   useEffect(() => {
@@ -48,16 +88,30 @@ export function ListDetail() {
       setIsEditingName(false)
       return
     }
-    
-    await updateList(currentList.id, { name: editedName.trim() })
+
+    const { error } = await updateList(currentList.id, { name: editedName.trim() })
+    if (error) {
+      toast.error('Failed to rename collection')
+    } else {
+      toast.success('Collection renamed')
+    }
     setIsEditingName(false)
   }
 
   const handleDeleteList = async () => {
-    if (!currentList || !window.confirm('Are you sure you want to delete this collection? This action cannot be undone.')) return
-    
-    await deleteList(currentList.id)
-    navigate('/')
+    if (!currentList || isDeletingCollection) return
+    setIsDeletingCollection(true)
+    try {
+      const { error } = await deleteList(currentList.id)
+      if (error) {
+        toast.error('Could not delete this collection. Please try again.')
+      } else {
+        toast.success('Collection deleted')
+        navigate('/')
+      }
+    } finally {
+      setIsDeletingCollection(false)
+    }
   }
 
   const handleUrlChange = async (url: string) => {
@@ -95,32 +149,43 @@ export function ListDetail() {
 
   const handleAddItem = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!user || !listId || !formData.title || !formData.url) return
+    if (!user || !listId || !formData.title || !formData.url || isAddingItem) return
+    setIsAddingItem(true)
 
-    await createItem({
-      list_id: listId,
-      user_id: user.id,
-      title: formData.title,
-      url: formData.url,
-      image_url: formData.image_url || null,
-      merchant: formData.merchant || null,
-      current_price: formData.price ? parseFloat(formData.price) : null,
-      currency: formData.currency,
-      is_available: true,
-      last_checked_at: new Date().toISOString()
-    })
+    try {
+      const { error } = await createItem({
+        list_id: listId,
+        user_id: user.id,
+        title: formData.title,
+        url: formData.url,
+        image_url: formData.image_url || null,
+        merchant: formData.merchant || null,
+        current_price: formData.price ? parseFloat(formData.price) : null,
+        currency: formData.currency,
+        is_available: true,
+        last_checked_at: new Date().toISOString()
+      })
 
-    // Reset form
-    setFormData({
-      title: '',
-      url: '',
-      image_url: '',
-      merchant: '',
-      price: '',
-      currency: 'USD'
-    })
-    setScrapeError(null)
-    setShowAddForm(false)
+      if (error) {
+        toast.error('Could not add item. Please review the fields and try again.')
+        return
+      }
+      toast.success(`"${formData.title}" added to this collection`)
+
+      // Reset form
+      setFormData({
+        title: '',
+        url: '',
+        image_url: '',
+        merchant: '',
+        price: '',
+        currency: 'USD'
+      })
+      setScrapeError(null)
+      setShowAddForm(false)
+    } finally {
+      setIsAddingItem(false)
+    }
   }
 
   // Loading State
@@ -153,14 +218,26 @@ export function ListDetail() {
     <div className="space-y-10 pb-20">
       {/* Header Section */}
       <div className="flex flex-col gap-6 border-b border-slate-200/60 pb-6">
-        {/* Breadcrumbs */}
-        <nav className="flex items-center text-sm font-medium text-slate-500">
-          <Link to="/" className="hover:text-primary-600 transition-colors">My Collections</Link>
-          <svg className="w-4 h-4 mx-2 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-          <span className="text-slate-900 truncate max-w-[200px]">{currentList?.name}</span>
-        </nav>
+        {/* Back button and Breadcrumbs */}
+        <div className="flex items-center gap-3">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-primary-600 transition-colors group"
+          >
+            <svg className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back
+          </Link>
+          <span className="text-slate-300">|</span>
+          <nav className="flex items-center text-sm font-medium text-slate-500">
+            <Link to="/" className="hover:text-primary-600 transition-colors">My Collections</Link>
+            <svg className="w-4 h-4 mx-2 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+            <span className="text-slate-900">{currentList?.name}</span>
+          </nav>
+        </div>
 
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6">
           <div className="flex-1 w-full">
@@ -180,7 +257,7 @@ export function ListDetail() {
               <div className="group flex items-center gap-3">
                 <h1 
                   onClick={() => setIsEditingName(true)}
-                  className="text-3xl font-bold text-slate-900 font-display tracking-tight cursor-pointer hover:text-primary-700 transition-colors"
+                  className="text-2xl sm:text-3xl font-bold text-slate-900 font-display tracking-tight cursor-pointer hover:text-primary-700 transition-colors"
                   title="Click to edit name"
                 >
                   {currentList?.name}
@@ -200,20 +277,11 @@ export function ListDetail() {
             </p>
           </div>
 
-          <div className="flex items-center gap-3 w-full sm:w-auto">
-             <button
-              onClick={() => handleDeleteList()}
-              className="btn-ghost text-red-600 hover:text-red-700 hover:bg-red-50"
-              title="Delete Collection"
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </button>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
             {!showAddForm && (
               <button
                 onClick={() => setShowAddForm(true)}
-                className="btn-primary flex-1 sm:flex-none flex items-center gap-2 group shadow-lg shadow-primary-500/20"
+                className="btn-primary w-full sm:w-auto flex items-center justify-center gap-2 group shadow-lg shadow-primary-500/20"
               >
                 <svg className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
@@ -221,6 +289,32 @@ export function ListDetail() {
                 <span>Add Item</span>
               </button>
             )}
+            <div className="flex items-center gap-3">
+              {items.length > 0 && (
+                <button
+                  onClick={handleCheckPrices}
+                  disabled={isCheckingPrices}
+                  className="btn-secondary flex-1 sm:flex-none flex items-center justify-center gap-2 text-sm disabled:opacity-50"
+                  title="Check all prices"
+                >
+                  <svg className={`w-4 h-4 ${isCheckingPrices ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  {isCheckingPrices
+                    ? `Checking ${priceCheckProgress.completed}/${priceCheckProgress.total}...`
+                    : 'Check Prices Now'}
+                </button>
+              )}
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="btn-ghost text-red-600 hover:text-red-700 hover:bg-red-50"
+                title="Delete Collection"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -262,7 +356,7 @@ export function ListDetail() {
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-slate-700">
                   Product URL <span className="text-red-500">*</span>
-                  {isScraping && <span className="ml-2 text-xs text-primary-600 font-normal">Scraping...</span>}
+                  {isScraping && <span className="ml-2 text-xs text-primary-600 font-normal">Extracting product details...</span>}
                 </label>
                 <input
                   type="url"
@@ -352,15 +446,26 @@ export function ListDetail() {
               <button
                 type="button"
                 onClick={() => setShowAddForm(false)}
-                className="btn-secondary"
+                disabled={isAddingItem}
+                className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="btn-primary px-8"
+                disabled={isAddingItem}
+                className="btn-primary px-8 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Add Item
+                {isAddingItem ? (
+                  <span className="inline-flex items-center gap-2">
+                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h5m11 2a8 8 0 10-2.3 5.7" />
+                    </svg>
+                    Adding...
+                  </span>
+                ) : (
+                  'Add Item'
+                )}
               </button>
             </div>
           </form>
@@ -370,19 +475,22 @@ export function ListDetail() {
       {/* Items Grid */}
       {items.length === 0 ? (
         <div className="text-center py-24 px-4">
-          <div className="w-20 h-20 bg-white rounded-3xl shadow-lg border border-slate-100 flex items-center justify-center mx-auto mb-6 -rotate-3">
+          <div className="w-20 h-20 bg-gradient-to-br from-slate-50 to-slate-100 rounded-3xl shadow-sm border border-slate-200 flex items-center justify-center mx-auto mb-6">
             <svg className="w-10 h-10 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
             </svg>
           </div>
           <h3 className="text-2xl font-bold text-slate-900 mb-2">No items yet</h3>
-          <p className="text-slate-500 max-w-sm mx-auto mb-8 text-lg">
-            This collection is empty. Add your first item above!
+          <p className="text-slate-500 max-w-md mx-auto mb-8 text-base leading-relaxed">
+            Add product URLs and we'll track their prices for you. Paste a link to get started.
           </p>
           <button
             onClick={() => setShowAddForm(true)}
-            className="btn-primary"
+            className="btn-primary inline-flex items-center gap-2"
           >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
             Add your first item
           </button>
         </div>
@@ -392,11 +500,35 @@ export function ListDetail() {
             <ItemCard
               key={item.id}
               item={item}
-              onDelete={() => deleteItem(item.id)}
+              isDeleting={deletingItemId === item.id}
+              onDelete={async () => {
+                if (deletingItemId) return
+                setDeletingItemId(item.id)
+                const { error } = await deleteItem(item.id)
+                if (error) {
+                  toast.error('Could not remove the item. Please try again.')
+                } else {
+                  toast.success('Item removed')
+                }
+                setDeletingItemId(null)
+              }}
             />
           ))}
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        onConfirm={() => {
+          setShowDeleteConfirm(false)
+          handleDeleteList()
+        }}
+        onCancel={() => setShowDeleteConfirm(false)}
+        title="Delete Collection"
+        message={`Are you sure you want to delete "${currentList?.name}"? All items in this collection will be permanently removed. This action cannot be undone.`}
+        confirmLabel={isDeletingCollection ? 'Deleting...' : 'Delete'}
+        variant="danger"
+      />
     </div>
   )
 }
