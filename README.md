@@ -2,20 +2,21 @@
 
 A web-first wishlist aggregation app that lets you save products from any shopping site, organize them into lists and folders, and track prices and availability.
 
-## Features (MVP)
+## Features
 
-✅ **Authentication** - Sign up/sign in with email/password
-✅ **Lists Management** - Create, view, and delete wishlists
-✅ **Items Management** - Save products with metadata (title, price, image, URL)
-✅ **Folders** - Organize lists into folders
-⏳ **Price Tracking** - Track price changes over time (coming soon)
-⏳ **Browser Extension** - Save products from any site (coming soon)
+✅ **Authentication** - Sign up/sign in with email/password  
+✅ **Collection Management** - Create, view, rename, and delete collections  
+✅ **Item Management** - Save products with metadata (title, price, image, URL)  
+✅ **Price Tracking** - Recheck prices and store history over time  
+✅ **Price History Charts** - Visualize price movement per item  
+✅ **Polished UX** - Custom confirmation dialogs, toast notifications, and responsive layouts  
+⏳ **Browser Extension** - Save products from any site (planned)
 
 ## Tech Stack
 
 - **Frontend**: React 19 + TypeScript + Vite + TailwindCSS v4
 - **Backend**: Supabase (PostgreSQL + Auth + Real-time)
-- **Testing**: Vitest + React Testing Library
+- **Testing**: Vitest + React Testing Library + Playwright
 - **Deployment**: Vercel (frontend) + Supabase (backend)
 
 ## Setup Instructions
@@ -53,6 +54,7 @@ Open [http://localhost:5173](http://localhost:5173)
 
 ```bash
 npm test
+npm run test:e2e
 ```
 
 ## Database Schema
@@ -70,7 +72,8 @@ All tables have Row Level Security (RLS) enabled for data isolation.
 **Scripts:**
 - `npm run dev` - Start dev server
 - `npm run build` - Build for production
-- `npm test` - Run tests
+- `npm test` - Run app unit/integration tests (Vitest)
+- `npm run test:e2e` - Run browser end-to-end tests (Playwright)
 - `npm run test:ui` - Run tests with UI
 - `npm run test:coverage` - Generate coverage report
 
@@ -88,7 +91,8 @@ All tables have Row Level Security (RLS) enabled for data isolation.
 - [x] Basic UI
 
 ### Phase 2 (In Progress)
-- [ ] Price tracking with scraper
+- [x] Price tracking with scraper
+- [x] Price history charts
 - [ ] Browser extension for saving products
 - [ ] Availability tracking
 - [ ] Notifications on price drops
@@ -96,7 +100,6 @@ All tables have Row Level Security (RLS) enabled for data isolation.
 ### Phase 3 (Future)
 - [ ] Folders implementation
 - [ ] Search and filters
-- [ ] Price history charts
 - [ ] Export/import wishlists
 - [ ] Mobile app (React Native port)
 

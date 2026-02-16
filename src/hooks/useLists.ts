@@ -17,53 +17,72 @@ export function useLists(userId: string | null) {
   }, [userId])
 
   const fetchLists = async () => {
-    const { data, error } = await supabase
-      .from('lists')
-      .select('*')
+    try {
+      const response = await supabase
+        .from('lists')
+        .select('*')
 
-    if (!error && data) {
-      setLists(data)
+      if (!response?.error && response?.data) {
+        setLists(response.data)
+      }
+    } catch (error) {
+      console.error('Failed to fetch lists:', error)
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   const createList = async (list: Omit<List, 'id' | 'created_at' | 'updated_at'>) => {
-    const { data, error } = await supabase
-      .from('lists')
-      .insert(list)
-      .select()
+    try {
+      const response = await supabase
+        .from('lists')
+        .insert(list)
+        .select()
 
-    if (!error && data) {
-      setLists([...lists, data[0]])
-      return { data: data[0], error: null }
+      if (!response?.error && response?.data?.[0]) {
+        setLists([...lists, response.data[0]])
+        return { data: response.data[0], error: null }
+      }
+
+      return { data: null, error: response?.error ?? new Error('Failed to create list') }
+    } catch (error) {
+      return { data: null, error }
     }
-    return { data: null, error }
   }
 
   const updateList = async (id: string, updates: Partial<List>) => {
-    const { data, error } = await supabase
-      .from('lists')
-      .update(updates)
-      .eq('id', id)
-      .select()
+    try {
+      const response = await supabase
+        .from('lists')
+        .update(updates)
+        .eq('id', id)
+        .select()
 
-    if (!error && data) {
-      setLists(lists.map(l => l.id === id ? data[0] : l))
-      return { data: data[0], error: null }
+      if (!response?.error && response?.data?.[0]) {
+        setLists(lists.map(l => l.id === id ? response.data[0] : l))
+        return { data: response.data[0], error: null }
+      }
+
+      return { data: null, error: response?.error ?? new Error('Failed to update list') }
+    } catch (error) {
+      return { data: null, error }
     }
-    return { data: null, error }
   }
 
   const deleteList = async (id: string) => {
-    const { error } = await supabase
-      .from('lists')
-      .delete()
-      .eq('id', id)
+    try {
+      const response = await supabase
+        .from('lists')
+        .delete()
+        .eq('id', id)
 
-    if (!error) {
-      setLists(lists.filter(l => l.id !== id))
+      if (!response?.error) {
+        setLists(lists.filter(l => l.id !== id))
+      }
+      return { error: response?.error ?? null }
+    } catch (error) {
+      return { error }
     }
-    return { error }
   }
 
   return {

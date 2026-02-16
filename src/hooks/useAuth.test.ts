@@ -20,6 +20,18 @@ describe('useAuth', () => {
     vi.clearAllMocks()
   })
 
+  async function mockBaseAuthState() {
+    const { supabase } = await import('../lib/supabase')
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({
+      data: { session: null },
+      error: null,
+    })
+    vi.mocked(supabase.auth.onAuthStateChange).mockReturnValue({
+      data: { subscription: { unsubscribe: vi.fn() } },
+    } as any)
+    return { supabase }
+  }
+
   it('should return null user when not authenticated', async () => {
     const { supabase } = await import('../lib/supabase')
     vi.mocked(supabase.auth.getSession).mockResolvedValue({
@@ -85,7 +97,7 @@ describe('useAuth', () => {
       created_at: new Date().toISOString(),
     }
 
-    const { supabase } = await import('../lib/supabase')
+    const { supabase } = await mockBaseAuthState()
     vi.mocked(supabase.auth.signInWithPassword).mockResolvedValue({
       data: {
         user: mockUser,
@@ -102,6 +114,7 @@ describe('useAuth', () => {
     })
 
     const { result } = renderHook(() => useAuth())
+    await waitFor(() => expect(result.current.loading).toBe(false))
 
     const response = await result.current.signIn('test@example.com', 'password')
 
@@ -113,13 +126,14 @@ describe('useAuth', () => {
   })
 
   it('should handle sign in error', async () => {
-    const { supabase } = await import('../lib/supabase')
+    const { supabase } = await mockBaseAuthState()
     vi.mocked(supabase.auth.signInWithPassword).mockResolvedValue({
       data: { user: null, session: null },
       error: { message: 'Invalid credentials', name: 'AuthError', status: 400 },
     })
 
     const { result } = renderHook(() => useAuth())
+    await waitFor(() => expect(result.current.loading).toBe(false))
 
     const response = await result.current.signIn('test@example.com', 'wrong')
 
@@ -127,10 +141,11 @@ describe('useAuth', () => {
   })
 
   it('should sign out', async () => {
-    const { supabase } = await import('../lib/supabase')
+    const { supabase } = await mockBaseAuthState()
     vi.mocked(supabase.auth.signOut).mockResolvedValue({ error: null })
 
     const { result } = renderHook(() => useAuth())
+    await waitFor(() => expect(result.current.loading).toBe(false))
 
     await result.current.signOut()
 

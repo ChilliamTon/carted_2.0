@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { renderHook, waitFor } from '@testing-library/react'
+import { renderHook, waitFor, act } from '@testing-library/react'
 import { useLists } from './useLists'
 
 vi.mock('../lib/supabase', () => ({
@@ -40,12 +40,15 @@ describe('useLists', () => {
     const mockInsert = vi.fn().mockReturnValue({ select: mockSelect })
     vi.mocked(supabase.from).mockReturnValue({ insert: mockInsert, select: vi.fn() } as any)
 
-    const { result } = renderHook(() => useLists('user-1'))
+    const { result } = renderHook(() => useLists(null))
+    let response: Awaited<ReturnType<typeof result.current.createList>> | undefined
 
-    const response = await result.current.createList(newList)
+    await act(async () => {
+      response = await result.current.createList(newList)
+    })
 
-    expect(response.data).toEqual(createdList)
-    expect(response.error).toBeNull()
+    expect(response?.data).toEqual(createdList)
+    expect(response?.error).toBeNull()
     expect(mockInsert).toHaveBeenCalledWith(newList)
   })
 
@@ -59,12 +62,15 @@ describe('useLists', () => {
     const mockUpdate = vi.fn().mockReturnValue({ eq: mockEq })
     vi.mocked(supabase.from).mockReturnValue({ update: mockUpdate, select: vi.fn() } as any)
 
-    const { result } = renderHook(() => useLists('user-1'))
+    const { result } = renderHook(() => useLists(null))
+    let response: Awaited<ReturnType<typeof result.current.updateList>> | undefined
 
-    const response = await result.current.updateList('1', updates)
+    await act(async () => {
+      response = await result.current.updateList('1', updates)
+    })
 
-    expect(response.data).toEqual(updatedList)
-    expect(response.error).toBeNull()
+    expect(response?.data).toEqual(updatedList)
+    expect(response?.error).toBeNull()
     expect(mockUpdate).toHaveBeenCalledWith(updates)
   })
 
@@ -74,11 +80,14 @@ describe('useLists', () => {
     const mockDelete = vi.fn().mockReturnValue({ eq: mockEq })
     vi.mocked(supabase.from).mockReturnValue({ delete: mockDelete, select: vi.fn() } as any)
 
-    const { result } = renderHook(() => useLists('user-1'))
+    const { result } = renderHook(() => useLists(null))
+    let response: Awaited<ReturnType<typeof result.current.deleteList>> | undefined
 
-    const response = await result.current.deleteList('1')
+    await act(async () => {
+      response = await result.current.deleteList('1')
+    })
 
-    expect(response.error).toBeNull()
+    expect(response?.error).toBeNull()
     expect(mockDelete).toHaveBeenCalled()
   })
 })
