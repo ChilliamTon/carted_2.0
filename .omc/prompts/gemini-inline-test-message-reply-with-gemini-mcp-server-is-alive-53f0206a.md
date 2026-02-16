@@ -1,0 +1,1 @@
+Test message: Reply with "Gemini MCP server is alive and ready!" and nothing else.

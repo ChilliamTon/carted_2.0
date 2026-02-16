@@ -3,23 +3,36 @@
   "lastScanned": 1771179211821,
   "projectRoot": "/Users/tonthattuankiet/Documents/carted_2.0",
   "techStack": {
-    "languages": [],
-    "frameworks": [],
-    "packageManager": null,
-    "runtime": null
+    "languages": [
+      "TypeScript",
+      "SQL"
+    ],
+    "frameworks": [
+      "React 19",
+      "Vite",
+      "TailwindCSS v4",
+      "Supabase"
+    ],
+    "packageManager": "npm",
+    "runtime": "Node.js"
   },
   "build": {
-    "buildCommand": null,
-    "testCommand": null,
-    "lintCommand": null,
-    "devCommand": null,
-    "scripts": {}
+    "buildCommand": "npm run build",
+    "testCommand": "npm test",
+    "devCommand": "npm run dev",
+    "scripts": {
+      "dev": "vite (runs on localhost:5173)",
+      "build": "tsc && vite build",
+      "test": "vitest",
+      "test:ui": "vitest --ui",
+      "test:coverage": "vitest --coverage"
+    }
   },
   "conventions": {
-    "namingStyle": null,
-    "importStyle": null,
-    "testPattern": null,
-    "fileOrganization": null
+    "namingStyle": "camelCase for variables/functions, PascalCase for components",
+    "importStyle": "ES modules (type: module in package.json)",
+    "testPattern": "*.test.ts and *.test.tsx (colocated with source files)",
+    "fileOrganization": "Feature-based: hooks/, components/, pages/, lib/, types/"
   },
   "structure": {
     "isMonorepo": false,
@@ -27,7 +40,26 @@
     "mainDirectories": [],
     "gitBranches": null
   },
-  "customNotes": [],
+  "customNotes": [
+    {
+      "timestamp": 1771201043423,
+      "source": "manual",
+      "category": "architecture",
+      "content": "Migration path planned: Web app (React) first → React Native port for iOS later. Logic/hooks are 100% portable, only UI components need replacement (div→View, button→Pressable). Share sheet integration will use react-native-share-menu on iOS."
+    },
+    {
+      "timestamp": 1771201043563,
+      "source": "manual",
+      "category": "test",
+      "content": "Test files (*.test.ts, *.test.tsx) are excluded from TypeScript build in tsconfig.json but still run via Vitest. This prevents type conflicts between test mocks and production types."
+    },
+    {
+      "timestamp": 1771201043644,
+      "source": "manual",
+      "category": "env",
+      "content": "Environment variables: VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY required in .env file. Template exists at .env, credentials from Supabase dashboard. ImportMeta interface defined in src/vite-env.d.ts for TypeScript."
+    }
+  ],
   "directoryMap": {
     "maestro": {
       "path": "maestro",
@@ -45,15 +77,57 @@
   },
   "hotPaths": [
     {
+      "path": "src/pages/ListDetail.tsx",
+      "accessCount": 10,
+      "lastAccessed": 1771209758692,
+      "type": "file"
+    },
+    {
+      "path": "src/App.tsx",
+      "accessCount": 7,
+      "lastAccessed": 1771209758844,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/Auth.tsx",
+      "accessCount": 6,
+      "lastAccessed": 1771209758207,
+      "type": "file"
+    },
+    {
+      "path": "src/index.css",
+      "accessCount": 6,
+      "lastAccessed": 1771209759050,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/Lists.tsx",
+      "accessCount": 5,
+      "lastAccessed": 1771209758413,
+      "type": "file"
+    },
+    {
+      "path": "src/components/lists/ListCard.tsx",
+      "accessCount": 5,
+      "lastAccessed": 1771209763355,
+      "type": "file"
+    },
+    {
+      "path": "src/components/items/ItemCard.tsx",
+      "accessCount": 5,
+      "lastAccessed": 1771209763669,
+      "type": "file"
+    },
+    {
       "path": "package.json",
       "accessCount": 3,
       "lastAccessed": 1771179925162,
       "type": "file"
     },
     {
-      "path": "src/App.tsx",
-      "accessCount": 2,
-      "lastAccessed": 1771180118484,
+      "path": "src/hooks/useAuth.ts",
+      "accessCount": 3,
+      "lastAccessed": 1771204475502,
       "type": "file"
     },
     {
@@ -69,9 +143,27 @@
       "type": "file"
     },
     {
-      "path": "src/index.css",
+      "path": "supabase/migrations/001_initial_schema.sql",
       "accessCount": 2,
-      "lastAccessed": 1771180208162,
+      "lastAccessed": 1771201216020,
+      "type": "file"
+    },
+    {
+      "path": ".env.example",
+      "accessCount": 2,
+      "lastAccessed": 1771201221049,
+      "type": "file"
+    },
+    {
+      "path": ".env",
+      "accessCount": 2,
+      "lastAccessed": 1771203002792,
+      "type": "file"
+    },
+    {
+      "path": "src/main.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1771205408330,
       "type": "file"
     },
     {
@@ -99,12 +191,6 @@
       "type": "file"
     },
     {
-      "path": "src/main.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1771179908741,
-      "type": "file"
-    },
-    {
       "path": "tailwind.config.js",
       "accessCount": 1,
       "lastAccessed": 1771179909421,
@@ -123,33 +209,15 @@
       "type": "file"
     },
     {
-      "path": "supabase/migrations/001_initial_schema.sql",
-      "accessCount": 1,
-      "lastAccessed": 1771179985072,
-      "type": "file"
-    },
-    {
       "path": "src/lib/supabase.ts",
       "accessCount": 1,
       "lastAccessed": 1771179993041,
       "type": "file"
     },
     {
-      "path": ".env.example",
-      "accessCount": 1,
-      "lastAccessed": 1771179993943,
-      "type": "file"
-    },
-    {
       "path": "src/hooks/useAuth.test.ts",
       "accessCount": 1,
       "lastAccessed": 1771180022937,
-      "type": "file"
-    },
-    {
-      "path": "src/hooks/useAuth.ts",
-      "accessCount": 1,
-      "lastAccessed": 1771180027776,
       "type": "file"
     },
     {
@@ -171,30 +239,6 @@
       "type": "file"
     },
     {
-      "path": "src/components/lists/ListCard.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1771180087723,
-      "type": "file"
-    },
-    {
-      "path": "src/components/items/ItemCard.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1771180093835,
-      "type": "file"
-    },
-    {
-      "path": "src/pages/Lists.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1771180103802,
-      "type": "file"
-    },
-    {
-      "path": "src/pages/Auth.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1771180112280,
-      "type": "file"
-    },
-    {
       "path": "src/vite-env.d.ts",
       "accessCount": 1,
       "lastAccessed": 1771180183509,
@@ -205,7 +249,52 @@
       "accessCount": 1,
       "lastAccessed": 1771180238762,
       "type": "file"
+    },
+    {
+      "path": "vercel.json",
+      "accessCount": 1,
+      "lastAccessed": 1771180372637,
+      "type": "file"
+    },
+    {
+      "path": "DEMO.md",
+      "accessCount": 1,
+      "lastAccessed": 1771180418331,
+      "type": "file"
+    },
+    {
+      "path": "supabase/functions/scrape-product/index.ts",
+      "accessCount": 1,
+      "lastAccessed": 1771209430851,
+      "type": "file"
+    },
+    {
+      "path": "src/lib/scraper.ts",
+      "accessCount": 1,
+      "lastAccessed": 1771209472631,
+      "type": "file"
+    },
+    {
+      "path": "src/components/FeatureSlider.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1771209763966,
+      "type": "file"
     }
   ],
-  "userDirectives": []
+  "userDirectives": [
+    {
+      "timestamp": 1771201042614,
+      "directive": "Always use TDD (Test-Driven Development) - write tests first, then implementation. First 1000 lines must be robust and fully tested.",
+      "context": "User explicitly required TDD approach with robust testing for initial codebase",
+      "source": "explicit",
+      "priority": "high"
+    },
+    {
+      "timestamp": 1771201042723,
+      "directive": "TailwindCSS v4 uses new syntax: @import \"tailwindcss\"; (not the old @tailwind directives). No tailwind.config.js or postcss.config.js needed.",
+      "context": "Migrated from TailwindCSS v3 to v4, which has breaking syntax changes",
+      "source": "explicit",
+      "priority": "normal"
+    }
+  ]
 }

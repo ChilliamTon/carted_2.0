@@ -35,6 +35,9 @@ export function useAuth() {
       email,
       password,
     })
+    if (error) {
+      console.error('Supabase signup error:', error)
+    }
     return { data, error }
   }
 

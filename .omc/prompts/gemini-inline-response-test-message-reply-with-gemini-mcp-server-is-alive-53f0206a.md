@@ -1,0 +1,1 @@
+Gemini MCP server is alive and ready!

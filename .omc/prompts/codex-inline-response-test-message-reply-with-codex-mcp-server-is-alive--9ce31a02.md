@@ -1,0 +1,1 @@
+Codex MCP server is alive and ready!

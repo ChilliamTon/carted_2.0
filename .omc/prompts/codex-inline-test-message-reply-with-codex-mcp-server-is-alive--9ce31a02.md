@@ -1,0 +1,1 @@
+Test message: Reply with "Codex MCP server is alive and ready!" and nothing else.
