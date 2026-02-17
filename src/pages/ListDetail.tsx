@@ -1,19 +1,34 @@
-import { useState, useEffect } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useState, useEffect, useMemo } from 'react'
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useLists } from '../hooks/useLists'
 import { useItems } from '../hooks/useItems'
 import { ItemCard } from '../components/items/ItemCard'
+import { GuidedOnboardingCard } from '../components/onboarding/GuidedOnboardingCard'
 import { ConfirmDialog, useToast } from '../components/ui'
 import { scrapeProductUrl, isLikelyProductUrl } from '../lib/scraper'
 import { recheckAllPrices } from '../lib/priceChecker'
+import { sanitizeSharedUrl } from '../lib/share'
+import { getNextBestAction } from '../lib/onboarding'
+import { useOnboarding } from '../hooks/useOnboarding'
 
 export function ListDetail() {
   const { listId } = useParams<{ listId: string }>()
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { user } = useAuth()
   
   const toast = useToast()
+  const {
+    state: onboardingState,
+    nextStep,
+    progress: onboardingProgress,
+    hydrated: onboardingHydrated,
+    isGuideVisible,
+    dismissGuide,
+    completeStep,
+    isStepComplete,
+  } = useOnboarding(user?.id || null)
 
   // Fetch lists to get the current list details (name, etc.)
   const { lists, loading: listsLoading, deleteList, updateList } = useLists(user?.id || null)
@@ -42,6 +57,17 @@ export function ListDetail() {
   const [isAddingItem, setIsAddingItem] = useState(false)
   const [isDeletingCollection, setIsDeletingCollection] = useState(false)
   const [deletingItemId, setDeletingItemId] = useState<string | null>(null)
+  const [sharedUrlConsumed, setSharedUrlConsumed] = useState(false)
+
+  const sharedUrl = useMemo(
+    () => sanitizeSharedUrl(searchParams.get('sharedUrl')),
+    [searchParams],
+  )
+  const shareSource = searchParams.get('source') || 'link'
+  const focusedItemId = searchParams.get('focusItem')
+  const isFocusedItemPresent = focusedItemId
+    ? items.some((item) => item.id === focusedItemId)
+    : false
 
   // Price checking state
   const [isCheckingPrices, setIsCheckingPrices] = useState(false)
@@ -67,6 +93,10 @@ export function ListDetail() {
         toast.success(`Checked prices for ${succeeded} item${succeeded === 1 ? '' : 's'}.`)
       }
 
+      if (succeeded > 0 && !isStepComplete('check-prices')) {
+        completeStep('check-prices')
+      }
+
       // Refetch items to show updated prices
       refetch()
     } catch {
@@ -82,6 +112,34 @@ export function ListDetail() {
       setEditedName(currentList.name)
     }
   }, [currentList])
+
+  useEffect(() => {
+    const intent = searchParams.get('intent')
+    if (!intent) return
+
+    if (intent === 'add-item') {
+      setShowAddForm(true)
+    }
+
+    const nextParams = new URLSearchParams(searchParams)
+    nextParams.delete('intent')
+    setSearchParams(nextParams, { replace: true })
+  }, [searchParams, setSearchParams])
+
+  useEffect(() => {
+    if (!onboardingHydrated) return
+    if (items.length === 0 || isStepComplete('add-item')) return
+    completeStep('add-item')
+  }, [completeStep, isStepComplete, items.length, onboardingHydrated])
+
+  useEffect(() => {
+    if (!focusedItemId) return
+
+    const target = document.getElementById(`item-${focusedItemId}`)
+    if (!target) return
+
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [focusedItemId, items.length])
 
   const handleUpdateListName = async () => {
     if (!currentList || !editedName.trim() || editedName === currentList.name) {
@@ -107,7 +165,7 @@ export function ListDetail() {
         toast.error('Could not delete this collection. Please try again.')
       } else {
         toast.success('Collection deleted')
-        navigate('/')
+        navigate('/collections')
       }
     } finally {
       setIsDeletingCollection(false)
@@ -147,6 +205,29 @@ export function ListDetail() {
     }
   }
 
+  const clearSharedUrlParams = () => {
+    const nextParams = new URLSearchParams(searchParams)
+    nextParams.delete('sharedUrl')
+    nextParams.delete('source')
+    setSearchParams(nextParams)
+  }
+
+  const clearFocusedItemParam = () => {
+    if (!focusedItemId) return
+    const nextParams = new URLSearchParams(searchParams)
+    nextParams.delete('focusItem')
+    setSearchParams(nextParams, { replace: true })
+  }
+
+  useEffect(() => {
+    if (!sharedUrl || sharedUrlConsumed) return
+
+    setShowAddForm(true)
+    setSharedUrlConsumed(true)
+    void handleUrlChange(sharedUrl)
+    toast.info(`Imported link from ${shareSource === 'extension' ? 'browser extension' : 'shared link'}.`)
+  }, [sharedUrl, sharedUrlConsumed, handleUrlChange, shareSource, toast])
+
   const handleAddItem = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user || !listId || !formData.title || !formData.url || isAddingItem) return
@@ -183,6 +264,10 @@ export function ListDetail() {
       })
       setScrapeError(null)
       setShowAddForm(false)
+      if (sharedUrlConsumed) {
+        clearSharedUrlParams()
+        setSharedUrlConsumed(false)
+      }
     } finally {
       setIsAddingItem(false)
     }
@@ -209,10 +294,19 @@ export function ListDetail() {
       <div className="text-center py-20">
         <h2 className="text-2xl font-bold text-slate-900">Collection not found</h2>
         <p className="text-slate-500 mt-2">The collection you're looking for doesn't exist or has been deleted.</p>
-        <Link to="/" className="btn-primary mt-6">Return to Collections</Link>
+        <Link to="/collections" className="btn-primary mt-6">Return to Collections</Link>
       </div>
     )
   }
+
+  const nextBestAction = getNextBestAction({
+    page: 'collection-detail',
+    state: onboardingState,
+    hasCollections: true,
+    hasItems: items.length > 0,
+    primaryCollectionId: currentList?.id || listId || null,
+  })
+  const useInlinePriceCheckAction = nextStep === 'check-prices' && items.length > 0
 
   return (
     <div className="space-y-10 pb-20">
@@ -221,19 +315,19 @@ export function ListDetail() {
         {/* Back button and Breadcrumbs */}
         <div className="flex items-center gap-3">
           <Link
-            to="/"
+            to="/collections"
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-primary-600 transition-colors group"
           >
-            <svg className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <svg className="w-1 h-1 group-hover:-translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M15 19l-7-7 7-7" />
             </svg>
             Back
           </Link>
           <span className="text-slate-300">|</span>
           <nav className="flex items-center text-sm font-medium text-slate-500">
-            <Link to="/" className="hover:text-primary-600 transition-colors">My Collections</Link>
-            <svg className="w-4 h-4 mx-2 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            <Link to="/collections" className="hover:text-primary-600 transition-colors">My Collections</Link>
+            <svg className="w-1 h-1 mx-2 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 5l7 7-7 7" />
             </svg>
             <span className="text-slate-900">{currentList?.name}</span>
           </nav>
@@ -266,8 +360,8 @@ export function ListDetail() {
                   onClick={() => setIsEditingName(true)}
                   className="text-slate-300 group-hover:text-slate-500 transition-colors p-1"
                 >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  <svg className="w-1 h-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                   </svg>
                 </button>
               </div>
@@ -283,8 +377,8 @@ export function ListDetail() {
                 onClick={() => setShowAddForm(true)}
                 className="btn-primary w-full sm:w-auto flex items-center justify-center gap-2 group shadow-lg shadow-primary-500/20"
               >
-                <svg className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+                <svg className="w-1 h-1 group-hover:rotate-90 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" />
                 </svg>
                 <span>Add Item</span>
               </button>
@@ -297,8 +391,8 @@ export function ListDetail() {
                   className="btn-secondary flex-1 sm:flex-none flex items-center justify-center gap-2 text-sm disabled:opacity-50"
                   title="Check all prices"
                 >
-                  <svg className={`w-4 h-4 ${isCheckingPrices ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  <svg className={`w-1 h-1 ${isCheckingPrices ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>
                   {isCheckingPrices
                     ? `Checking ${priceCheckProgress.completed}/${priceCheckProgress.total}...`
@@ -310,8 +404,8 @@ export function ListDetail() {
                 className="btn-ghost text-red-600 hover:text-red-700 hover:bg-red-50"
                 title="Delete Collection"
               >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                <svg className="w-1 h-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
               </button>
             </div>
@@ -319,21 +413,96 @@ export function ListDetail() {
         </div>
       </div>
 
+      {isGuideVisible && (
+        <GuidedOnboardingCard
+          action={nextBestAction}
+          nextStep={nextStep}
+          completedSteps={onboardingState.completedSteps}
+          progressLabel={`${onboardingProgress.completed}/${onboardingProgress.total} steps complete`}
+          onPrimaryAction={useInlinePriceCheckAction ? handleCheckPrices : undefined}
+          onDismissGuide={dismissGuide}
+        />
+      )}
+
+      {sharedUrl && (
+        <section className="rounded-2xl border border-primary-200 bg-primary-50/60 p-4 sm:p-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="space-y-2">
+              <p className="text-sm font-semibold text-primary-800">
+                Link ready from {shareSource === 'extension' ? 'Browser Extension' : 'shared link'}.
+              </p>
+              <p className="text-sm text-primary-700">
+                The item form is prefilled below. Review details, then click <span className="font-semibold">Add Item</span>.
+              </p>
+              <p className="break-all rounded-lg border border-primary-100 bg-white px-3 py-2 text-xs text-slate-600">
+                {sharedUrl}
+              </p>
+            </div>
+
+            <button
+              onClick={clearSharedUrlParams}
+              className="btn-secondary w-full sm:w-auto"
+            >
+              Clear Link
+            </button>
+          </div>
+        </section>
+      )}
+
+      {focusedItemId && isFocusedItemPresent && (
+        <section className="rounded-xl border border-primary-200 bg-primary-50/70 p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-primary-800">
+                Highlighting an item from Activity.
+              </p>
+              <p className="text-xs text-primary-700">
+                The selected item is outlined below for quick review.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={clearFocusedItemParam}
+                className="btn-secondary text-sm"
+              >
+                Clear Highlight
+              </button>
+              <Link to="/activity" className="btn-ghost text-sm">
+                Back to Activity
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {focusedItemId && !isFocusedItemPresent && (
+        <section className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-amber-800">
+              The activity event linked to an item that is no longer in this collection.
+            </p>
+            <button onClick={clearFocusedItemParam} className="btn-secondary text-sm">
+              Clear Highlight
+            </button>
+          </div>
+        </section>
+      )}
+
       {/* Add Item Form */}
       <div className={`transition-all duration-500 ease-spring ${showAddForm ? 'translate-y-0 opacity-100 max-h-[800px]' : '-translate-y-4 opacity-0 max-h-0 overflow-hidden pointer-events-none'}`}>
         <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-xl shadow-slate-200/60 border border-slate-200 ring-4 ring-slate-50 relative z-10">
           <div className="flex items-center justify-between mb-8 border-b border-slate-100 pb-4">
             <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
               <span className="w-8 h-8 rounded-lg bg-primary-100 text-primary-600 flex items-center justify-center">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                <svg className="w-1 h-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                 </svg>
               </span>
               Add New Item
             </h3>
             <button onClick={() => setShowAddForm(false)} className="text-slate-400 hover:text-slate-600">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg className="w-1 h-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
@@ -369,16 +538,16 @@ export function ListDetail() {
                 />
                 {scrapeError && (
                   <p className="text-xs text-amber-600 flex items-center gap-1">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    <svg className="w-1 h-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
                     {scrapeError} - You can still fill the form manually
                   </p>
                 )}
                 {!scrapeError && formData.title && formData.url && (
                   <p className="text-xs text-green-600 flex items-center gap-1">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    <svg className="w-1 h-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M5 13l4 4L19 7" />
                     </svg>
                     Product info auto-filled! Review and edit if needed
                   </p>
@@ -458,8 +627,8 @@ export function ListDetail() {
               >
                 {isAddingItem ? (
                   <span className="inline-flex items-center gap-2">
-                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h5m11 2a8 8 0 10-2.3 5.7" />
+                    <svg className="w-1 h-1 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 4v5h5m11 2a8 8 0 10-2.3 5.7" />
                     </svg>
                     Adding...
                   </span>
@@ -475,8 +644,8 @@ export function ListDetail() {
       {/* Items Grid */}
       {items.length === 0 ? (
         <div className="text-center py-24 px-4">
-          <div className="w-20 h-20 bg-gradient-to-br from-slate-50 to-slate-100 rounded-3xl shadow-sm border border-slate-200 flex items-center justify-center mx-auto mb-6">
-            <svg className="w-10 h-10 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-4 h-4 bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg shadow-sm border border-slate-200 flex items-center justify-center mx-auto mb-6">
+            <svg className="w-2 h-2 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
             </svg>
           </div>
@@ -488,8 +657,8 @@ export function ListDetail() {
             onClick={() => setShowAddForm(true)}
             className="btn-primary inline-flex items-center gap-2"
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            <svg className="w-1 h-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 4v16m8-8H4" />
             </svg>
             Add your first item
           </button>
@@ -497,22 +666,28 @@ export function ListDetail() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {items.map((item) => (
-            <ItemCard
+            <div
               key={item.id}
-              item={item}
-              isDeleting={deletingItemId === item.id}
-              onDelete={async () => {
-                if (deletingItemId) return
-                setDeletingItemId(item.id)
-                const { error } = await deleteItem(item.id)
-                if (error) {
-                  toast.error('Could not remove the item. Please try again.')
-                } else {
-                  toast.success('Item removed')
-                }
-                setDeletingItemId(null)
-              }}
-            />
+              id={`item-${item.id}`}
+              className={focusedItemId === item.id ? 'rounded-2xl ring-2 ring-primary-200' : ''}
+            >
+              <ItemCard
+                item={item}
+                highlighted={focusedItemId === item.id}
+                isDeleting={deletingItemId === item.id}
+                onDelete={async () => {
+                  if (deletingItemId) return
+                  setDeletingItemId(item.id)
+                  const { error } = await deleteItem(item.id)
+                  if (error) {
+                    toast.error('Could not remove the item. Please try again.')
+                  } else {
+                    toast.success('Item removed')
+                  }
+                  setDeletingItemId(null)
+                }}
+              />
+            </div>
           ))}
         </div>
       )}
