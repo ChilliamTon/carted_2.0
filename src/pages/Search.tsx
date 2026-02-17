@@ -52,6 +52,7 @@ export function Search() {
   })
   const [searchHistory, setSearchHistory] = useState<string[]>([])
   const [showHistory, setShowHistory] = useState(false)
+  const [selectedItemIds, setSelectedItemIds] = useState<string[]>([])
 
   useEffect(() => {
     setSearchHistory(getSearchHistory())
@@ -63,6 +64,16 @@ export function Search() {
 
   const hasResults = results.collections.length > 0 || results.items.length > 0
   const totalResults = results.collections.length + results.items.length
+  const selectedCompareItems = useMemo(
+    () => results.items.filter((item) => selectedItemIds.includes(item.id)),
+    [results.items, selectedItemIds],
+  )
+
+  useEffect(() => {
+    setSelectedItemIds((previous) =>
+      previous.filter((id) => results.items.some((item) => item.id === id)),
+    )
+  }, [results.items])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -88,6 +99,20 @@ export function Search() {
       collections: [],
       priceRange: null,
       availability: 'all',
+    })
+  }
+
+  const toggleCompareItem = (itemId: string) => {
+    setSelectedItemIds((previous) => {
+      if (previous.includes(itemId)) {
+        return previous.filter((id) => id !== itemId)
+      }
+
+      if (previous.length >= 3) {
+        return [...previous.slice(1), itemId]
+      }
+
+      return [...previous, itemId]
     })
   }
 
@@ -121,9 +146,19 @@ export function Search() {
           { label: 'Search' },
         ]}
         actions={
-          <Link to="/collections" className="btn-secondary text-sm">
-            Open Collections
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            {selectedCompareItems.length > 0 && (
+              <button
+                onClick={() => setSelectedItemIds([])}
+                className="btn-ghost text-sm"
+              >
+                Clear Compare ({selectedCompareItems.length})
+              </button>
+            )}
+            <Link to="/collections" className="btn-secondary text-sm">
+              Open Collections
+            </Link>
+          </div>
         }
       />
 
@@ -399,9 +434,61 @@ export function Search() {
                 <h4 className="text-sm font-bold uppercase tracking-wide text-slate-500 mb-3">
                   Items ({results.items.length})
                 </h4>
+
+                {selectedCompareItems.length > 0 && (
+                  <div className="mb-4 rounded-xl border border-primary-200 bg-primary-50/70 p-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p className="text-sm font-semibold text-primary-800">
+                          Compare tray ({selectedCompareItems.length}/3)
+                        </p>
+                        <p className="text-xs text-primary-700">
+                          Select up to 3 items to compare price and availability side-by-side.
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setSelectedItemIds([])}
+                        className="btn-secondary text-sm"
+                      >
+                        Reset Compare
+                      </button>
+                    </div>
+
+                    {selectedCompareItems.length >= 2 && (
+                      <div className="mt-3 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                        {selectedCompareItems.map((item) => (
+                          <article key={item.id} className="rounded-lg border border-primary-200 bg-white p-3">
+                            <p className="line-clamp-2 text-sm font-semibold text-slate-900">{item.title}</p>
+                            <p className="mt-1 text-xs text-slate-500">{item.collectionName}</p>
+                            <div className="mt-2 flex items-center justify-between">
+                              <span className="text-sm font-bold text-slate-900">
+                                {item.price !== null && item.price !== undefined
+                                  ? `${item.currency === 'USD' ? '$' : item.currency}${item.price.toFixed(2)}`
+                                  : 'Not tracked'}
+                              </span>
+                              <span
+                                className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                                  item.isAvailable ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
+                                }`}
+                              >
+                                {item.isAvailable ? 'In Stock' : 'Out'}
+                              </span>
+                            </div>
+                          </article>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <div className="space-y-3">
                   {results.items.map((result) => (
-                    <ItemSearchResult key={result.id} result={result} />
+                    <ItemSearchResult
+                      key={result.id}
+                      result={result}
+                      isSelected={selectedItemIds.includes(result.id)}
+                      onToggleCompare={() => toggleCompareItem(result.id)}
+                    />
                   ))}
                 </div>
               </div>
@@ -413,7 +500,15 @@ export function Search() {
   )
 }
 
-function ItemSearchResult({ result }: { result: SearchResult }) {
+function ItemSearchResult({
+  result,
+  isSelected,
+  onToggleCompare,
+}: {
+  result: SearchResult
+  isSelected: boolean
+  onToggleCompare: () => void
+}) {
   return (
     <article className="rounded-lg border border-slate-200 p-4 hover:border-primary-300 transition">
       <div className="flex items-start justify-between gap-4">
@@ -449,6 +544,16 @@ function ItemSearchResult({ result }: { result: SearchResult }) {
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
+          <button
+            onClick={onToggleCompare}
+            className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs font-semibold ${
+              isSelected
+                ? 'border-primary-300 bg-primary-50 text-primary-700'
+                : 'border-slate-200 text-slate-600 hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700'
+            }`}
+          >
+            {isSelected ? 'Selected' : 'Compare'}
+          </button>
           <Link
             to={`/items/${result.id}`}
             className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700"

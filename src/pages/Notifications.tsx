@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { useNotifications } from '../hooks/useNotifications'
 import { useLists } from '../hooks/useLists'
@@ -17,6 +17,17 @@ export function Notifications() {
   const { lists } = useLists(user?.id || null)
   const [typeFilter, setTypeFilter] = useState<NotificationTypeFilter>('all')
   const [listFilter, setListFilter] = useState<string>('all')
+  const [autoRefresh, setAutoRefresh] = useState(false)
+
+  useEffect(() => {
+    if (!autoRefresh) return
+
+    const interval = window.setInterval(() => {
+      void refetch()
+    }, 60_000)
+
+    return () => window.clearInterval(interval)
+  }, [autoRefresh, refetch])
 
   const filteredNotifications = useMemo(() => {
     return notifications.filter((notif) => {
@@ -85,6 +96,14 @@ export function Notifications() {
             <Link to="/activity" className="btn-secondary !px-3 !py-1.5 text-sm whitespace-nowrap">
               Open Activity
             </Link>
+            <button
+              onClick={() => setAutoRefresh((previous) => !previous)}
+              className={`btn-ghost !px-3 !py-1.5 text-sm whitespace-nowrap ${
+                autoRefresh ? '!text-primary-700 !bg-primary-50 !border-primary-200' : ''
+              }`}
+            >
+              {autoRefresh ? 'Auto Refresh On' : 'Auto Refresh Off'}
+            </button>
             {unreadCount > 0 && (
               <button
                 onClick={() => void markAllAsRead()}
