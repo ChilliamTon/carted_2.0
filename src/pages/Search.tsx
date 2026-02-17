@@ -448,15 +448,25 @@ function ItemSearchResult({ result }: { result: SearchResult }) {
           </div>
         </div>
 
-        <Link
-          to={`/collections/${result.collectionId}`}
-          className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-600 hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700 shrink-0"
-        >
-          View
-          <svg className="h-1 w-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 5l7 7-7 7" />
-          </svg>
-        </Link>
+        <div className="flex shrink-0 items-center gap-2">
+          <Link
+            to={`/items/${result.id}`}
+            className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700"
+          >
+            Open Item
+          </Link>
+          {result.collectionId && (
+            <Link
+              to={`/collections/${result.collectionId}`}
+              className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700"
+            >
+              Collection
+              <svg className="h-1 w-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+          )}
+        </div>
       </div>
     </article>
   )
