@@ -182,6 +182,17 @@
 - Added direct `Open Item` action for each item result.
 - Kept collection-level navigation as a secondary action.
 
+7. `7a05774` - `feat(ui): carted-inspired visual overhaul and interactive shell`
+- Introduced new warm, commerce-first visual theme (palette, typography, interaction tokens).
+- Added command palette (`⌘K` / `Ctrl+K`) with fast navigation actions.
+- Added route context strip, quick-action dock, and stronger page transitions.
+- Refreshed Auth and Dashboard experience to align with a shopping-centric workflow.
+
+8. `2a19d94` - `feat(interactions): add compare tray and live notifications mode`
+- Added Search compare tray (up to 3 items) with side-by-side quick comparison.
+- Added item-level compare toggle directly inside search results.
+- Added optional Notifications auto-refresh mode for live monitoring.
+
 ### Validation
 - Unit tests: `69/69` passing.
 - Build: passing.
