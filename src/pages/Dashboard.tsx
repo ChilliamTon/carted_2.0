@@ -69,13 +69,18 @@ export function Dashboard() {
         />
       )}
 
-      <section className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm sm:p-8">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <section className="relative overflow-hidden rounded-3xl border border-amber-200 bg-white p-6 shadow-sm sm:p-8">
+        <div aria-hidden className="pointer-events-none absolute inset-0">
+          <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-primary-200/50 blur-3xl" />
+          <div className="absolute bottom-0 left-0 h-40 w-40 rounded-full bg-amber-200/40 blur-2xl" />
+        </div>
+
+        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wide text-primary-700">Dashboard</p>
-            <h2 className="mt-1 text-2xl font-bold text-slate-900 sm:text-3xl">Clearer control over your wishlist workflow</h2>
+            <p className="kicker">Dashboard</p>
+            <h2 className="mt-1 text-2xl font-bold text-slate-900 sm:text-3xl">Your shopping control center</h2>
             <p className="mt-2 max-w-2xl text-slate-600">
-              Start here to review collections, navigate folders, and track what changed recently.
+              Review collections, track price movement, and jump straight to what matters next.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -87,6 +92,24 @@ export function Dashboard() {
             <Link to="/search" className="btn-ghost">Open Search</Link>
           </div>
         </div>
+      </section>
+
+      <section className="grid gap-3 sm:grid-cols-3">
+        <Link to="/collections?intent=create-collection" className="surface-card p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-primary-700">Start fast</p>
+          <p className="mt-1 text-lg font-bold text-slate-900">Create a collection</p>
+          <p className="mt-1 text-sm text-slate-600">Group products by purpose, season, or event.</p>
+        </Link>
+        <Link to="/search" className="surface-card p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-primary-700">Explore</p>
+          <p className="mt-1 text-lg font-bold text-slate-900">Search everything</p>
+          <p className="mt-1 text-sm text-slate-600">Find items instantly across every collection.</p>
+        </Link>
+        <Link to="/activity" className="surface-card p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-primary-700">Track changes</p>
+          <p className="mt-1 text-lg font-bold text-slate-900">Open activity feed</p>
+          <p className="mt-1 text-sm text-slate-600">Watch price and stock updates in one timeline.</p>
+        </Link>
       </section>
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -172,7 +195,7 @@ export function Dashboard() {
 
 function MetricCard({ label, value, helper }: { label: string; value: string; helper: string }) {
   return (
-    <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+    <article className="rounded-2xl border border-amber-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
       <p className="mt-1 text-2xl font-bold text-slate-900">{value}</p>
       <p className="mt-1 text-xs text-slate-500">{helper}</p>

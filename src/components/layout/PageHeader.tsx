@@ -22,7 +22,7 @@ export function PageHeader({
   actions,
 }: PageHeaderProps) {
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <section className="rounded-2xl border border-amber-200 bg-white p-6 shadow-sm">
       {breadcrumbs.length > 0 && (
         <nav className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
           {breadcrumbs.map((crumb, index) => (
@@ -43,7 +43,7 @@ export function PageHeader({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           {eyebrow && (
-            <p className="text-xs font-semibold uppercase tracking-wide text-primary-700">{eyebrow}</p>
+            <p className="kicker">{eyebrow}</p>
           )}
           <h2 className="text-2xl font-bold text-slate-900">{title}</h2>
           {description && <p className="mt-1 text-slate-600">{description}</p>}
